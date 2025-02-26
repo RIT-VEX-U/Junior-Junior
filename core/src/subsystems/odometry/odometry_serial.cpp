@@ -34,42 +34,189 @@
  * Construct a new Odometry Serial Object
  */
 OdometrySerial::OdometrySerial(
-  bool is_async, bool calc_vel_acc_on_brain, pose_t initial_pose, pose_t sensor_offset, int32_t port,
+  bool is_async, int32_t port,
   int32_t baudrate
 )
-    : OdometryBase(is_async), calc_vel_acc_on_brain(calc_vel_acc_on_brain), pose(Pose2d(0, 0, 0)),
-      pose_offset(Pose2d(0, 0, 0)), _port(port) {
+    : OdometryBase(is_async), _port(port) {
     vexGenericSerialEnable(_port, 0);
     vexGenericSerialBaudrate(_port, baudrate);
     
 }
 
-/**
- * Send 
- */
-void OdometrySerial::send_config(const pose_t &initial_pose, const pose_t &sensor_offset, const bool &calc_vel_acc_on_brain) {
-    uint8_t raw[(sizeof(initial_pose)) + sizeof(calc_vel_acc_on_brain)];
-    uint8_t cobs_encoded[sizeof(raw) + 1];
+// 0b00000001 is pose (48 bit packet)
+// 0b00000010 is vel (48 bit packet)
+// 0b00000100 is acc (48 bit packet)
+// 0b00000011 is pos/vel (96 bit packet)
+// 0b00000101 is pos/acc (96 bit packet)
+// 0b00000110 is vel/acc (96 bit packet)
+// 0b00000111 is pos/vel/acc (144 bit packet)
+// 0b00001000 is set config mode (wait for another 48 bit packet with the pos to set) respond 0xFF when finished
+// 0b00010000 is calibrate imu, (wait for another 8 bit packet with one byte for 0-255 samples) respond 0xFF when finished
+// 0b00100000 is reset tracking respond 0xFF when finished
+// 0b01000000 is set linear scalar, (wait for another 16 bit packet float) respond 0xFF when finished
+// 0b10000000 is set angular scalar, (wait for another 16 bit packet float) respond 0xFF when finished
+// 0b10001000 is set offset (wait for another 48 bit packet with the offset to set) respond 0xFF when finished
 
-    float initialx = (float)initial_pose.x;
-    float initialy = (float)initial_pose.y;
-    float initialrot = (float)initial_pose.rot;
+void OdometrySerial::calibrate_imu(uint8_t &samples) {
+    uint8_t ctl_byte = 0b00010000;
+    
+    send_packet(_port, &ctl_byte, 1);
+    send_packet(_port, &samples, 1);
 
-    float offsetx = (float)sensor_offset.x;
-    float offsety = (float)sensor_offset.y;
-    float offsetrot = (float)sensor_offset.rot;
+    receive_packet(_port, &ctl_byte, 1); // block until response received
+    printf("imu calibrated!\n");
+}
 
-    memcpy(&raw[0], &initialx, sizeof(float));
-    memcpy(&raw[4], &initialy, sizeof(float));
-    memcpy(&raw[8], &initialrot, sizeof(float));
-    memcpy(&raw[12], &offsetx, sizeof(float));
-    memcpy(&raw[16], &offsety, sizeof(float));
-    memcpy(&raw[20], &offsetrot, sizeof(float));
-    memcpy(&raw[24], &calc_vel_acc_on_brain, sizeof(bool));
+void OdometrySerial::reset_tracking() {
+    uint8_t ctl_byte = 0b00100000;
 
-    cobs_encode(raw, sizeof(raw), cobs_encoded);
+    send_packet(_port, &ctl_byte, 1);
 
-    vexGenericSerialTransmit(_port, cobs_encoded, sizeof(cobs_encoded));
+    receive_packet(_port, &ctl_byte, 1);
+    printf("tracking reset!\n");
+}
+void OdometrySerial::set_linear_scalar(const float &linear_scalar) {
+    uint8_t ctl_byte = 0b00010000;
+    uint8_t data[sizeof(linear_scalar)];
+    memcpy(&data, &linear_scalar, sizeof(linear_scalar));
+    
+    send_packet(_port, &ctl_byte, 1);
+    send_packet(_port, data, 1);
+
+    receive_packet(_port, &ctl_byte, 1); // block until response received
+}
+void OdometrySerial::set_angular_scalar(const float &angular_scalar) {
+    uint8_t ctl_byte = 0b00010000;
+    uint8_t data[sizeof(angular_scalar)];
+    memcpy(data, &angular_scalar, sizeof(angular_scalar));
+    
+    send_packet(_port, &ctl_byte, 1);
+    send_packet(_port, data, 1);
+
+    receive_packet(_port, &ctl_byte, 1); // block until response received
+}
+void OdometrySerial::set_offset(Pose2d &sensor_offset) {
+    while (!pausable) {
+
+    }
+    handle->suspend();
+    printf("setting offset\n");
+    uint8_t ctl_byte = 0b10001000;
+    uint8_t raw[6];
+    pose_to_regs(raw, sensor_offset, METER_TO_INT16, RAD_TO_INT16);
+    
+    send_packet(_port, &ctl_byte, 1);
+    send_packet(_port, raw, sizeof(raw));
+
+    receive_packet(_port, &ctl_byte, 1);
+    handle->resume();
+    printf("offset set!\n");
+}
+void OdometrySerial::set_position(Pose2d &pose) {
+    while (!pausable) {
+
+    }
+    handle->suspend();
+    uint8_t ctl_byte = 0b00001000;
+    uint8_t raw[6];
+    pose_to_regs(raw, pose, METER_TO_INT16, RAD_TO_INT16);
+    
+    send_packet(_port, &ctl_byte, 1);
+    send_packet(_port, raw, sizeof(raw));
+
+    receive_packet(_port, &ctl_byte, 1);
+    handle->resume();
+    printf("position set!\n");
+}
+
+void OdometrySerial::request_pos(Pose2d &pos) {
+    uint8_t ctl_byte = 0b00000001;
+    uint8_t raw[6];
+
+    send_packet(_port, &ctl_byte, 1);
+
+    receive_packet(_port, raw, sizeof(raw));
+    pos = regs_to_pose(raw, INT16_TO_METER, INT16_TO_RAD);
+}
+void OdometrySerial::request_vel(Pose2d &vel) {
+    uint8_t ctl_byte = 0b00000010;
+    uint8_t raw[6];
+
+    send_packet(_port, &ctl_byte, 1);
+
+    receive_packet(_port, raw, sizeof(raw));
+    vel = regs_to_pose(raw, INT16_TO_MPS, INT16_TO_RPS);
+}
+void OdometrySerial::request_acc(Pose2d &acc) {
+    uint8_t ctl_byte = 0b00000100;
+    uint8_t raw[6];
+
+    send_packet(_port, &ctl_byte, 1);
+
+    receive_packet(_port, raw, sizeof(raw));
+    acc = regs_to_pose(raw, INT16_TO_MPSS, INT16_TO_RPSS);
+}
+
+
+void OdometrySerial::request_pos_vel(Pose2d &pos, Pose2d &vel) {
+    uint8_t ctl_byte = 0b00000011;
+    uint8_t raw[12];
+
+    send_packet(_port, &ctl_byte, 1);
+
+    receive_packet(_port, raw, sizeof(raw));
+    pos = regs_to_pose(raw, INT16_TO_METER, INT16_TO_RAD);
+    vel = regs_to_pose(raw + 6, INT16_TO_MPS, INT16_TO_RPS);
+}
+void OdometrySerial::request_pos_acc(Pose2d &pos, Pose2d &acc) {
+    uint8_t ctl_byte = 0b00000101;
+    uint8_t raw[12];
+
+    send_packet(_port, &ctl_byte, 1);
+
+    receive_packet(_port, raw, sizeof(raw));
+    pos = regs_to_pose(raw, INT16_TO_METER, INT16_TO_RAD);
+    acc = regs_to_pose(raw + 6, INT16_TO_MPSS, INT16_TO_RPSS);
+}
+void OdometrySerial::request_vel_acc(Pose2d &vel, Pose2d &acc) {
+    uint8_t ctl_byte = 0b00000110;
+    uint8_t raw[12];
+
+    send_packet(_port, &ctl_byte, 1);
+
+    receive_packet(_port, raw, sizeof(raw));
+    vel = regs_to_pose(raw, INT16_TO_MPS, INT16_TO_RPS);
+    acc = regs_to_pose(raw + 6, INT16_TO_MPSS, INT16_TO_RPSS);
+}
+
+void OdometrySerial::request_pos_vel_acc(Pose2d &pos, Pose2d &vel, Pose2d &acc) {
+    uint8_t ctl_byte = 0b00000111;
+    uint8_t raw[18];
+
+    send_packet(_port, &ctl_byte, 1);
+
+    receive_packet(_port, raw, sizeof(raw));
+    pos = regs_to_pose(raw, INT16_TO_METER, INT16_TO_RAD);
+    vel = regs_to_pose(raw + 6, INT16_TO_MPS, INT16_TO_RPS);
+    acc = regs_to_pose(raw + 12, INT16_TO_MPSS, INT16_TO_RPSS);
+}
+
+int OdometrySerial::send_packet(uint32_t port, uint8_t *data, size_t data_size) {
+    uint8_t buffer[data_size + 2];
+    cobs_encode(data, data_size, buffer);
+
+    for (int i = 0; i < data_size + 2; i++) {
+        printf("%x ", buffer[i]);
+    }
+
+    printf("\n");
+    return vexGenericSerialTransmit(port, buffer, data_size + 1);
+}
+
+int OdometrySerial::receive_packet(uint32_t port, uint8_t *buffer, size_t buffer_size) {
+    uint8_t cobs_encoded[buffer_size + 1];
+    receive_cobs_packet(port, cobs_encoded, buffer_size + 1);
+    return cobs_decode(buffer, buffer_size + 1, cobs_encoded);
 }
 
 /**
@@ -86,6 +233,7 @@ int OdometrySerial::receive_cobs_packet(uint32_t port, uint8_t *buffer, size_t b
     while (true) {
         // wait for a byte (we read byte by byte into our own buffer rather than grabbing the whole packet all at once)
         if (vexGenericSerialReceiveAvail(port) > 0) {
+            printf("avail\n");
             uint8_t character = vexGenericSerialReadChar(port);
 
             // if delimiter
@@ -112,46 +260,17 @@ int OdometrySerial::receive_cobs_packet(uint32_t port, uint8_t *buffer, size_t b
  * @return the robot's updated position
  */
 pose_t OdometrySerial::update() {
-    uint8_t cobs_encoded_size;
-    uint8_t packet_size;
+    printf("update\n");
+    this->pausable = false;
+    request_pos_vel_acc(pos, vel, acc);
+    this->pausable = true;
+    this->speed = vel.translation().norm();
+    this->accel = acc.translation().norm();
+    this->ang_speed_deg = vel.rotation().degrees();
+    this->ang_accel_deg = acc.rotation().degrees();
 
-    cobs_encoded_size = 29;
-    packet_size = 28;
 
-    uint8_t cobs_encoded[cobs_encoded_size];
-    uint8_t decoded_packet[packet_size];
-
-    int packet_length = receive_cobs_packet(_port, cobs_encoded, cobs_encoded_size);
-    Pose2d updated_pose(0, 0, 0);
-
-    if (packet_length == cobs_encoded_size) {
-        if (cobs_decode(cobs_encoded, packet_length, decoded_packet) == packet_size) {
-            float *floats = (float *)decoded_packet;
-        
-            updated_pose = Pose2d(Translation2d(floats[0], floats[1]), from_degrees(floats[2]));
-            this->pose = updated_pose;
-            this->speed = floats[3];
-            this->accel = floats[4];
-            this->ang_speed_deg = floats[5];
-            this->ang_accel_deg = floats[6];
-        } else {
-            printf("OdometrySerial: Invalid COBS encoding\n");
-            return {0, 0, 0};
-        }
-    } else if (packet_length == -1) {
-        printf("OdometrySerial: Buffer overflow\n");
-        return {0, 0, 0};
-    }
-    return {pose.x(), pose.y(), pose.rotation().wrapped_degrees_360()};
-}
-
-/**
- * Resets the position and rotational data to the input.
- * 
- * @param new_pose the pose to set the odometry to
- */
-void OdometrySerial::set_position(const Pose2d &new_pose) {
-    pose_offset = new_pose;
+    return {pos.x(), pos.y(), pos.rotation().wrapped_degrees_360()};
 }
 
 /**
@@ -170,7 +289,7 @@ pose_t OdometrySerial::get_position(void) {
  * @return the position that the odometry believes the robot is at
  */
 Pose2d OdometrySerial::get_pose2d(void) {
-    return pose.relative_to(pose_offset);
+    return pos;
 }
 
 /** COBS encode data to buffer
@@ -201,6 +320,8 @@ size_t OdometrySerial::cobs_encode(const void *data, size_t length, uint8_t *buf
         }
     }
     *codep = code; // Write final code value
+
+    *encode++ = 0x00; // Append 0x00 delimiter
 
     return (size_t)(encode - buffer);
 }
@@ -235,16 +356,27 @@ size_t OdometrySerial::cobs_decode(const uint8_t *buffer, size_t length, void *d
     return (size_t)(decode - (uint8_t *)data);
 }
 
+Pose2d OdometrySerial::regs_to_pose(uint8_t *raw, float raw_to_xy, float raw_to_h) {
+    int16_t raw_x = (raw[1] << 8) | raw[0];
+    int16_t raw_y = (raw[3] << 8) | raw[2];
+    int16_t raw_h = (raw[5] << 8) | raw[4];
 
-double OdometrySerial::get_speed() {
-  double retval = speed;
+    double x = raw_x * raw_to_xy * METER_TO_INCH;
+    double y = raw_y * raw_to_xy * METER_TO_INCH;
+    double h = raw_h * raw_to_h;
 
-  return retval;
+    return Pose2d(x, y, h);
 }
 
-double OdometrySerial::get_accel() {
-  double retval = accel;
+void OdometrySerial::pose_to_regs(uint8_t *raw, Pose2d &pose, float xy_to_raw, float h_to_raw) {
+    int16_t rawx = (float)(pose.x()) * xy_to_raw / METER_TO_INCH;
+    int16_t rawy = (float)(pose.y()) * xy_to_raw / METER_TO_INCH;
+    int16_t rawh = (float)(pose.rotation().wrapped_radians_360()) * h_to_raw / RADIAN_TO_DEGREE;
 
-  return retval;
+    raw[0] = rawx & 0xFF;
+    raw[1] = (rawx >> 8) & 0xFF;
+    raw[2] = rawy & 0xFF;
+    raw[3] = (rawy >> 8) & 0xFF;
+    raw[4] = rawh & 0xFF;
+    raw[5] = (rawh >> 8) & 0xFF;
 }
-

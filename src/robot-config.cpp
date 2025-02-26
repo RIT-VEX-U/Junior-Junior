@@ -114,7 +114,7 @@ pose_t blue_auto_start{122.37, 54, 30.3};
 pose_t red_auto_start{21.63, 54, 149.7};
 pose_t zero{0, 0, 0};
 
-OdometrySerial odom(true, true, skills_start, pose_t{-3.83, 0.2647, 270}, vex::PORT13, 115200);
+OdometrySerial odom(true, vex::PORT13, 115200);
 OdometryBase *base = &odom;
 
 TankDrive drive_sys(left_drive_motors, right_drive_motors, robot_cfg, &odom);
@@ -132,7 +132,12 @@ vex::digital_out mcglight_board(Brain.ThreeWirePort.B);
 void robot_init() {
     screen::start_screen(Brain.Screen, {new screen::PIDPage(turn_pid, "turnpid")});
     vexDelay(100);
-    odom.send_config(skills_start, pose_t{-3.83, 0.2647, 270}, true);
+    // odom.send_config(skills_start, pose_t{-3.83, 0.2647, 270}, true);
+    Pose2d sensoroffset{-3.83, 0.2647, from_degrees(270)};
+    Pose2d blueautostart{122.37, 54, from_degrees(30.3)};
+    odom.set_offset(sensoroffset);
+    odom.set_position(blueautostart);
+    // odom.set_linear_scalar()
     printf("started!\n");
     color_sensor.setLight(vex::ledState::on);
     // FeedForward::ff_config_t config = drive_motioncontroller.tune_feedforward(drive_sys, odom, 1, 1);
