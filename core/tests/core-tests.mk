@@ -7,6 +7,10 @@ SRC_C  = $(wildcard core/tests/src/*.cpp)
 SRC_C += $(wildcard core/tests/src/*.c)
 SRC_C += $(wildcard core/tests/src/*/*.cpp) 
 SRC_C += $(wildcard core/tests/src/*/*.c)
+SRC_C += $(wildcard core/tests/src/*/*/*.cpp) 
+SRC_C += $(wildcard core/tests/src/*/*/*.c)
+SRC_C += $(wildcard core/tests/src/*/*/*/*.cpp) 
+SRC_C += $(wildcard core/tests/src/*/*/*/*.c)
 
 # Core repo cpp and c files
 SRC_C += $(wildcard core/src/*.cpp)
