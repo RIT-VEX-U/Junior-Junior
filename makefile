@@ -3,12 +3,18 @@
 # show compiler output
 VERBOSE = 0
 
-# include toolchain options
-include vex/mkenv.mk
-
 # enable debug metadata
 CFLAGS += -g
 CXX_FLAGS += -g
+
+# include toolchain options
+include vex/mkenv.mk
+
+BUILD_CORE_TESTS=1
+
+ifeq ($(BUILD_CORE_TESTS), 1)
+include core/tests/core-tests.mk
+else
 
 # location of the project source cpp and c files
 SRC_C  = $(wildcard src/*.cpp) 
@@ -42,6 +48,7 @@ SRC_H += $(wildcard core/include/*/*/*/*.h)
 
 # Vendor include directories
 INC += -Ivendor/eigen
+endif
 
 
 # additional dependancies
