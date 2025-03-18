@@ -5,6 +5,23 @@
 	"cmake.sourceDirectory": "C:/Users/brayd/Documents/ritearlybot/NamePending/vendor/eigen/scripts",
 	"files.associations": {
 		"new": "cpp",
-		"functional": "cpp"
-	}
+		"functional": "cpp",
+		"core": "cpp",
+		"superlusupport": "cpp",
+		"*.evaluator": "cpp",
+		"*.traits": "cpp",
+		"adolcforward": "cpp",
+		"alignedvector3": "cpp",
+		"autodiff": "cpp",
+		"bvh": "cpp",
+		"eulerangles": "cpp",
+		"fft": "cpp",
+		"kroneckerproduct": "cpp",
+		"mprealsupport": "cpp",
+		"numericaldiff": "cpp",
+		"openglsupport": "cpp",
+		"specialfunctions": "cpp",
+		"splines": "cpp"
+	},
+	"C_Cpp.default.compilerPath": "C:/TDM-GCC-64/bin/g++.exe"
 }
