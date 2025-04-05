@@ -3,52 +3,52 @@
 
 IntakeSys::IntakeSys() { task = vex::task(thread_fn, this); }
 
-void IntakeSys::color_sort_on() { color_sort_state = IntakeSys::ColorSortState::ON; }
+// void IntakeSys::color_sort_on() { color_sort_state = IntakeSys::ColorSortState::ON; }
 
-void IntakeSys::color_sort_off() { color_sort_state = IntakeSys::ColorSortState::OFF; }
+// void IntakeSys::color_sort_off() { color_sort_state = IntakeSys::ColorSortState::OFF; }
 
-AutoCommand *IntakeSys::SetColorSortCmd(bool colorsort_on) {
-    return new FunctionCommand([&]() {
-        set_color_sort_bool(colorsort_on);
-        return true;
-    });
-}
+// AutoCommand *IntakeSys::SetColorSortCmd(bool colorsort_on) {
+//     return new FunctionCommand([&]() {
+//         set_color_sort_bool(colorsort_on);
+//         return true;
+//     });
+// }
 
-void IntakeSys::set_color_sort_bool(bool ColorSortOn) {
-    if (ColorSortOn) {
-        color_sort_state = IntakeSys::ColorSortState::ON;
-    } else {
-        color_sort_state = IntakeSys::ColorSortState::OFF;
-    }
-}
+// void IntakeSys::set_color_sort_bool(bool ColorSortOn) {
+//     if (ColorSortOn) {
+//         color_sort_state = IntakeSys::ColorSortState::ON;
+//     } else {
+//         color_sort_state = IntakeSys::ColorSortState::OFF;
+//     }
+// }
 
-bool IntakeSys::should_stop_for_colorsort() {
-    if (color_sort_state == ColorSortState::OFF) {
-        return false;
-    }
-    return color_sensor_counter > 0 && color_sensor_counter < 16;
-}
+// bool IntakeSys::should_stop_for_colorsort() {
+//     if (color_sort_state == ColorSortState::OFF) {
+//         return false;
+//     }
+//     return color_sensor_counter > 0 && color_sensor_counter < 16;
+// }
 
 void IntakeSys::colorSort() {
     // printf("colorsorting, %d\n", color_sensor_counter);
-    mcglight_board.set(true);
-    if (blue_alliance()) {
-        if (color_sensor.hue() > 0 && color_sensor.hue() < 30 && color_sensor_counter == 0) {
-            color_sensor_counter = 20;
-            conveyor.spin(vex::forward, intakeVolts, vex::volt);
-            // wallstakemech_sys.set_setpoint(from_degrees(130));
-        }
-    } else {
-        if (color_sensor.hue() > 160 && color_sensor.hue() < 240 && color_sensor_counter == 0) {
-            color_sensor_counter = 20;
-            conveyor.spin(vex::forward, intakeVolts, vex::volt);
-            // wallstakemech_sys.set_setpoint(from_degrees(130));
-        }
-    }
+    // mcglight_board.set(true);
+    // if (blue_alliance()) {
+    //     if (color_sensor.hue() > 0 && color_sensor.hue() < 30 && color_sensor_counter == 0) {
+    //         color_sensor_counter = 20;
+    //         conveyor.spin(vex::forward, intakeVolts, vex::volt);
+    //         // wallstakemech_sys.set_setpoint(from_degrees(130));
+    //     }
+    // } else {
+    //     if (color_sensor.hue() > 160 && color_sensor.hue() < 240 && color_sensor_counter == 0) {
+    //         color_sensor_counter = 20;
+    //         conveyor.spin(vex::forward, intakeVolts, vex::volt);
+    //         // wallstakemech_sys.set_setpoint(from_degrees(130));
+    //     }
+    // }
 
-    if (color_sensor_counter > 0) {
-        color_sensor_counter--;
-    }
+    // if (color_sensor_counter > 0) {
+    //     color_sensor_counter--;
+    // }
 }
 void IntakeSys::intake(double volts) {
     intake_state = IntakeState::IN;
@@ -72,20 +72,20 @@ void IntakeSys::conveyor_out(double volts) {
     conveyorVolts = volts;
 }
 
-void IntakeSys::setLight(bool state) { mcglight_board.set(state); }
+// void IntakeSys::setLight(bool state) { mcglight_board.set(state); }
 
 int IntakeSys::thread_fn(void *ptr) {
     IntakeSys &self = *(IntakeSys *)ptr;
-    color_sensor.setLight(vex::ledState::on);
-    color_sensor.setLightPower(100, vex::pct);
+    // color_sensor.setLight(vex::ledState::on);
+    // color_sensor.setLightPower(100, vex::pct);
 
     while (true) {
-        if (self.color_sort_state == ColorSortState::ON && self.intake_state == IntakeState::IN) {
-            mcglight_board.set(true);
-            self.colorSort();
-        } else {
-            mcglight_board.set(false);
-        }
+        // if (self.color_sort_state == ColorSortState::ON && self.intake_state == IntakeState::IN) {
+        //     mcglight_board.set(true);
+        //     // self.colorSort();
+        // } else {
+        //     mcglight_board.set(false);
+        // }
 
         if (self.intake_state == IntakeState::IN) {
             intake_motor.spin(vex::fwd, self.intakeVolts, vex::volt);
@@ -98,19 +98,15 @@ int IntakeSys::thread_fn(void *ptr) {
         }
         if (self.conveyor_state == IntakeState::IN) {
             // printf("ConveyorState IN \n");
-            if (self.should_stop_for_colorsort()) {
-                // conveyor.stop();
-                printf("AHHHHHH\n");
-                wallstakemech_sys.set_setpoint(from_degrees(130));
+            // if (self.should_stop_for_colorsort()) {
+            //     // conveyor.stop();
+            //     printf("AHHHHHH\n");
+            //     wallstakemech_sys.set_setpoint(from_degrees(130));
 
-            } else {
+            // } else {
                 intake_motor.spin(vex::fwd, self.intakeVolts, vex::volt);
                 conveyor.spin(vex::fwd, self.conveyorVolts, vex::volt);
-                if (self.color_sort_state == ColorSortState::ON && self.color_sensor_counter <= 0) {
-                    wallstakemech_sys.set_setpoint(from_degrees(200));
-                    printf("AHHHHHH\n");
-                }
-            }
+            //     if (self.c 
 
         } else if (self.conveyor_state == IntakeState::OUT) {
             // printf("ConveyorState OUT \n");

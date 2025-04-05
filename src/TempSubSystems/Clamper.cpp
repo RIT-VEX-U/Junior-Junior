@@ -4,9 +4,9 @@
 ClamperSys::ClamperSys() { task = vex::task(thread_fn, this); }
 
 void ClamperSys::autoClamp() {
-    if (goal_sensor.objectDistance(vex::mm) < 40) {
-        clamper_state = ClamperState::CLAMPED;
-    }
+    // if (goal_sensor.objectDistance(vex::mm) < 40) {
+    //     clamper_state = ClamperState::CLAMPED;
+    // }
 }
 
 AutoCommand *ClamperSys::AutoClampCmd(bool do_autoclamp) {

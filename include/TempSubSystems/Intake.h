@@ -45,11 +45,11 @@ class IntakeSys {
 
     void setLight(bool state);
 
-    void color_sort_on();
-    void color_sort_off();
-    void set_color_sort_bool(bool colorSortingOn);
+    // void color_sort_on();
+    // void color_sort_off();
+    // void set_color_sort_bool(bool colorSortingOn);
 
-    bool should_stop_for_colorsort();
+    // bool should_stop_for_colorsort();
     static int thread_fn(void *ptr);
 
     AutoCommand *IntakeCmd(double amt = 10.0);

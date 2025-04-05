@@ -20,15 +20,15 @@ extern CustomEncoder front_enc;
 
 // ================ OUTPUTS ================
 // Motors
-extern vex::motor left_back_bottom;
-extern vex::motor left_center_bottom;
-extern vex::motor left_front_top;
-extern vex::motor left_back_top;
+extern vex::motor left_top;
+extern vex::motor left_front;
+extern vex::motor left_middle;
+extern vex::motor left_rear;
 
-extern vex::motor right_back_bottom;
-extern vex::motor right_center_bottom;
-extern vex::motor right_front_top;
-extern vex::motor right_back_top;
+extern vex::motor right_top;
+extern vex::motor right_front;
+extern vex::motor right_middle;
+extern vex::motor right_rear;
 
 extern vex::motor conveyor;
 extern vex::motor intake_motor;
@@ -41,7 +41,7 @@ extern Rotation2d initial;
 extern Rotation2d tolerance;
 extern double pot_offset;
 extern vex::pot wall_pot;
-extern WallStakeMech wallstakemech_sys;
+// extern WallStakeMech wallstakemech_sys;
 
 extern vex::motor_group left_drive_motors;
 extern vex::motor_group right_drive_motors;

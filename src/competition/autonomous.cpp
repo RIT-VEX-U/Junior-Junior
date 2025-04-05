@@ -17,7 +17,7 @@ void autonomous() {
 }
 
 void game_auto_red() {
-    intake_sys.color_sort_on();
+    // intake_sys.color_sort_on();
 
     CommandController cc{
       // Goal Rush
@@ -76,7 +76,7 @@ void game_auto_red() {
 }
 
 void game_auto_blue() {
-    intake_sys.color_sort_on();
+    // intake_sys.color_sort_on();
 
     CommandController cc{
       // Goal Rush
@@ -164,9 +164,9 @@ void skills() {
         }
     };
 
-    intake_sys.color_sort_on();
-    wallstakemech_sys.set_setpoint(from_degrees(200));
-    wallstakemech_sys.hold = true;
+    // intake_sys.color_sort_on();
+    // wallstakemech_sys.set_setpoint(from_degrees(200));
+    // wallstakemech_sys.hold = true;
     clamper_sys.unclamp();
 
     vexDelay(1000);
@@ -188,11 +188,11 @@ void skills() {
       drive_sys.DriveToPointCmd({68.8, 22}, vex::fwd, 0.4, 0)->withTimeout(2.0), 
 
 
-      intake_sys.SetColorSortCmd(false),
+      // intake_sys.SetColorSortCmd(false),
 
       drive_sys.DriveToPointCmd({69.0, 23}, vex::fwd, 0.4, 0)->withTimeout(1.5), 
       new DelayCommand(400),
-      wallstakemech_sys.set_setpoint_command(from_degrees(170)),
+      // wallstakemech_sys.set_setpoint_command(from_degrees(170)),
       drive_sys.TurnToHeadingCmd(-90.0, 1.0)->withTimeout(0.8),
 
 
@@ -202,7 +202,7 @@ void skills() {
 
       get_into_wallstake(),
       drive_sys.DriveForwardCmd(12, vex::fwd, 0.3)->withTimeout(1.5),
-      wallstakemech_sys.set_setpoint_command(from_degrees(45)),
+      // wallstakemech_sys.set_setpoint_command(from_degrees(45)),
       drive_sys.DriveForwardCmd(0.5, vex::reverse, 1)->withTimeout(0.8),
       drive_sys.DriveForwardCmd(1.5, vex::fwd, 1)->withTimeout(0.8),
 
@@ -211,7 +211,7 @@ void skills() {
       drive_sys.DriveForwardCmd(8, vex::reverse, 0.3)->withTimeout(1.0),
 
       drive_sys.TurnToPointCmd(36, 36,vex::fwd, 1)->withTimeout(0.5),
-      wallstakemech_sys.set_setpoint_command(from_degrees(200)),
+      // wallstakemech_sys.set_setpoint_command(from_degrees(200)),
       intake_sys.IntakeCmd(),
       intake_sys.ConveyorInCmd(),      
       // Stage for center
