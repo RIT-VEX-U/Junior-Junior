@@ -17,7 +17,7 @@ void autonomous() {
 }
 
 void game_auto_red() {
-    intake_sys.color_sort_on();
+    // intake_sys.color_sort_on();
 
     CommandController cc{
       // Goal Rush
@@ -76,7 +76,7 @@ void game_auto_red() {
 }
 
 void game_auto_blue() {
-    intake_sys.color_sort_on();
+    // intake_sys.color_sort_on();
 
     CommandController cc{
       // Goal Rush
@@ -136,16 +136,12 @@ void game_auto_blue() {
 
 AutoCommand *get_into_wallstake() {
     return new InOrder({
-      intake_sys.ConveyorInCmd(12.0), new DelayCommand(100), intake_sys.ConveyorStopCmd(), new DelayCommand(100),
-      intake_sys.ConveyorInCmd(12.0), new DelayCommand(100), intake_sys.ConveyorStopCmd(), new DelayCommand(100),
-      intake_sys.ConveyorInCmd(12.0), new DelayCommand(100), intake_sys.ConveyorStopCmd(), new DelayCommand(100),
-      intake_sys.ConveyorInCmd(12.0), new DelayCommand(100), intake_sys.ConveyorStopCmd(), new DelayCommand(100),
-      intake_sys.ConveyorInCmd(12.0), new DelayCommand(100), intake_sys.ConveyorStopCmd(), new DelayCommand(100),
-      intake_sys.ConveyorInCmd(12.0), new DelayCommand(100), intake_sys.ConveyorStopCmd(), new DelayCommand(100),
-      intake_sys.ConveyorInCmd(12.0), new DelayCommand(100), intake_sys.ConveyorStopCmd(), new DelayCommand(100),
-      intake_sys.ConveyorInCmd(12.0), new DelayCommand(100), intake_sys.ConveyorStopCmd(), new DelayCommand(100),
-      intake_sys.ConveyorInCmd(12.0), new DelayCommand(100), intake_sys.ConveyorStopCmd(), new DelayCommand(100),
-      intake_sys.ConveyorInCmd(12.0), new DelayCommand(100), intake_sys.ConveyorStopCmd(),
+      intake_sys.ConveyorInCmd(), new DelayCommand(100), intake_sys.ConveyorStopCmd(), new DelayCommand(100),
+      intake_sys.ConveyorInCmd(), new DelayCommand(100), intake_sys.ConveyorStopCmd(), new DelayCommand(100),
+      intake_sys.ConveyorInCmd(), new DelayCommand(100), intake_sys.ConveyorStopCmd(), new DelayCommand(100),
+      intake_sys.ConveyorInCmd(), new DelayCommand(100), intake_sys.ConveyorStopCmd(), new DelayCommand(100),
+      intake_sys.ConveyorInCmd(), new DelayCommand(100), intake_sys.ConveyorStopCmd(), new DelayCommand(100),
+      intake_sys.ConveyorInCmd(), new DelayCommand(100), intake_sys.ConveyorStopCmd(),
     });
 }
 
@@ -154,8 +150,8 @@ void skills() {
       public:
         bool run() override {
             drive_sys.stop();
-            pose_t pos = odom.get_position();
-            printf("ODO X: %.2f, Y: %.2f, R:%.2f\n", pos.x, pos.y, pos.rot);
+            // pose_t pos = odom.get_position();
+            // printf("ODO X: %.2f, Y: %.2f, R:%.2f\n", pos.x, pos.y, pos.rot);
             while (true) {
                 double straight = (double)con.Axis3.position() / 100;
                 double turn = (double)con.Axis1.position() / 100;
@@ -168,11 +164,12 @@ void skills() {
         }
     };
 
-    intake_sys.color_sort_on();
-    wallstakemech_sys.set_setpoint(from_degrees(200));
-    wallstakemech_sys.hold = true;
+    // intake_sys.color_sort_on();
+    // wallstakemech_sys.set_setpoint(from_degrees(200));
+    // wallstakemech_sys.hold = true;
     clamper_sys.unclamp();
 
+    vexDelay(1000);
     // clang-format off
     CommandController cc{
       // drop the intake
@@ -191,11 +188,11 @@ void skills() {
       drive_sys.DriveToPointCmd({68.8, 22}, vex::fwd, 0.4, 0)->withTimeout(2.0), 
 
 
-      intake_sys.SetColorSortCmd(false),
+      // intake_sys.SetColorSortCmd(false),
 
       drive_sys.DriveToPointCmd({69.0, 23}, vex::fwd, 0.4, 0)->withTimeout(1.5), 
       new DelayCommand(400),
-      wallstakemech_sys.set_setpoint_command(from_degrees(170)),
+      // wallstakemech_sys.set_setpoint_command(from_degrees(170)),
       drive_sys.TurnToHeadingCmd(-90.0, 1.0)->withTimeout(0.8),
 
 
@@ -205,20 +202,18 @@ void skills() {
 
       get_into_wallstake(),
       drive_sys.DriveForwardCmd(12, vex::fwd, 0.3)->withTimeout(1.5),
-      wallstakemech_sys.set_setpoint_command(from_degrees(45)),
+      // wallstakemech_sys.set_setpoint_command(from_degrees(45)),
       drive_sys.DriveForwardCmd(0.5, vex::reverse, 1)->withTimeout(0.8),
       drive_sys.DriveForwardCmd(1.5, vex::fwd, 1)->withTimeout(0.8),
-      intake_sys.ConveyorInCmd(12.0), new DelayCommand(100), intake_sys.ConveyorStopCmd(), new DelayCommand(100),
 
       new DelayCommand(1000),
       intake_sys.OuttakeCmd(),
-      wallstakemech_sys.set_setpoint_command(from_degrees(200)),
       drive_sys.DriveForwardCmd(8, vex::reverse, 0.3)->withTimeout(1.0),
 
       drive_sys.TurnToPointCmd(36, 36,vex::fwd, 1)->withTimeout(0.5),
+      // wallstakemech_sys.set_setpoint_command(from_degrees(200)),
       intake_sys.IntakeCmd(),
       intake_sys.ConveyorInCmd(),      
-
       // Stage for center
       drive_sys.TurnToPointCmd(40 ,43.5, vex::fwd, 1)->withTimeout(0.5),
       drive_sys.DriveToPointCmd({40, 43.5}, vex::fwd, 0.4, 0)->withTimeout(1),
@@ -230,26 +225,20 @@ void skills() {
       drive_sys.TurnToPointCmd(69, 69,vex::fwd, 1)->withTimeout(0.5),
       drive_sys.DriveToPointCmd({76, 72}, vex::fwd, 0.2, 0)->withTimeout(2.0),
       drive_sys.TurnToHeadingCmd(45, 1.0)->withTimeout(1.0),
-      drive_sys.DriveToPointCmd({40,40},vex::reverse,0.5)->withTimeout(3.0),
+      drive_sys.DriveToPointCmd({40,40},vex::reverse,0.5),
 
-      // ring in 'middle'
       drive_sys.TurnToPointCmd(16.15, 17, vex::fwd, 1)->withTimeout(0.5),
       drive_sys.DriveToPointCmd({16.15, 17}, vex::fwd, 0.2, 0)->withTimeout(2.0), 
 
-      // 
-      drive_sys.TurnToPointCmd(1, 1.0, vex::fwd, 1.0)->withTimeout(1.0),
-      drive_sys.DriveToPointCmd({1.0, 1.0}, vex::fwd, 0.2)->withTimeout(2.0),
+      drive_sys.TurnToPointCmd(10, 10.0, vex::fwd, 1.0)->withTimeout(1.0),
+      drive_sys.DriveToPointCmd({10.0, 10.0}, vex::fwd, 0.2)->withTimeout(1.0),
       drive_sys.DriveForwardCmd(12, vex::reverse, 0.3)->withTimeout(1.0),
       drive_sys.TurnToHeadingCmd(45, 1.0)->withTimeout(1.0),
-
-      // drop goal
-      drive_sys.DriveForwardCmd(15, vex::reverse, 0.3)->withTimeout(3.0),
+      drive_sys.DriveForwardCmd(12, vex::reverse, 0.3)->withTimeout(1.0),
       clamper_sys.ClampCmd(ClamperSys::UNCLAMPED),
-      intake_sys.OuttakeCmd(),
-      drive_sys.DriveForwardCmd(15, vex::fwd, 0.6)->withTimeout(5),
-      intake_sys.ConveyorStopCmd(),
-      intake_sys.IntakeStopCmd(),
+      drive_sys.DriveForwardCmd(12, vex::fwd, 0.6),
 
+      new DelayCommand(1000000),
     };
     cc.run();
     // clang-format on
